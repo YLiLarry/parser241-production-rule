@@ -29,7 +29,7 @@ maker = Maker
 -- >    Start ---> A & B ...
 -- >            ...
 --
-(--->) :: FromMaker m => (Ord a) => Symbol a -> a -> m a ()
+(--->) :: FromMaker m => Symbol a -> a -> m a ()
 lhs ---> rhs = fromMaker $ maker (lhs, [[UD rhs]])
 
 
@@ -47,7 +47,7 @@ lhs ---> rhs = fromMaker $ maker (lhs, [[UD rhs]])
 -- >            |/ Null
 -- >            ...
 --
-(-->) :: FromMaker m => (Ord a) => a -> a -> m a ()
+(-->) :: FromMaker m => a -> a -> m a ()
 lhs --> rhs = fromMaker $ NT lhs ---> rhs
 
 
