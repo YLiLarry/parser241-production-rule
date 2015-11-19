@@ -1,5 +1,5 @@
 name:                parser241-production-rule
-version:             0.0.0.0
+version:             1.0.0.0
 synopsis:            An interface to create production rules using augmented grammars
 description:         This package allows you to define production rules using clean augmented grammars.
 homepage:            https://github.com/YLiLarry/parser241-product-rule
