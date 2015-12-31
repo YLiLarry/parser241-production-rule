@@ -11,13 +11,17 @@ data TestNT = A0 | B0 | C0 deriving (Eq, Show, Ord)
 
 
 tableA :: [Rule TestNT]
-tableA = rules $ do
-   Start ---> A0 & B0 & C0
-      |> A0 & B0
-      |/ Null
-   A0 --> B0 & C0 & A0
-      |> A0 & C0
-      |/ Null
+tableA = rules $ do {
+      start --> A0 & B0 & C0
+        |> A0 & B0
+        |> null
+    ; A0 --> B0 & C0 & A0
+          |> A0 & C0
+          |> null
+  }
+  where
+    start = Start :: Symbol TestNT
+    null = Null   :: Symbol TestNT
 
 
 data MySym = A
@@ -27,22 +31,26 @@ data MySym = A
 
 tableB :: [Rule MySym]
 tableB = rules $ do
-
-   Start ---> A & C' & B  -- AC'B concatenation
+    start --> A & C' & B  -- AC'B concatenation
            |> A
            |> C'
 
       ; A --> B
-           |/ Null
+           |> null
            |> A & C'
 
       ; B --> C'
+  where
+    start = Start :: Symbol MySym
+    null  = Null  :: Symbol MySym
 
 tableC :: [Rule MySym]
 tableC = rules $
-   Start >>> Null & C'
+   start --> null & C'
           |> C'
-
+  where
+    start = Start :: Symbol MySym
+    null  = Null  :: Symbol MySym
 
 ignoreOrder :: (Ord a) => [Rule a] -> Set (Symbol a, Set [Symbol a])
 ignoreOrder = S.fromList . map (S.fromList `second`)

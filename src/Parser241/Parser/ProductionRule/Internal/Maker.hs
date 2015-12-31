@@ -1,6 +1,9 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+-- {-# LANGUAGE FunctionalDependencies #-}
+{-# LANGUAGE FlexibleInstances #-}
 
 module Parser241.Parser.ProductionRule.Internal.Maker where
 
@@ -20,35 +23,34 @@ maker :: (Symbol a, [[Symbol a]]) -> Maker a
 maker = Maker
 
 
--- | Use `--->` iff the left side is the `Start` symbol and the first symbol on the right side is an user-defined symbol.
---
---   Only one symbol is allowed on the left hand side.
---
--- > table :: [Rule MySym]
--- > table = productRules $ do
--- >    Start ---> A & B ...
--- >            ...
---
-(--->) :: FromMaker m => Symbol a -> a -> m a ()
-lhs ---> rhs = fromMaker $ maker (lhs, [[UD rhs]])
+class Produce l r a where
+   (-->) :: FromMaker m => l -> r -> m a ()
+
+instance Produce (Symbol a) a a where
+   lhs --> rhs = fromMaker $ maker (lhs, [[UD rhs]])
+
+instance Produce a (Symbol a) a where
+   lhs --> rhs = fromMaker $ maker (NT lhs, [[rhs]])
+
+instance Produce a a a where
+   lhs --> rhs = fromMaker $ maker (NT lhs, [[UD rhs]])
+
+instance Produce (Symbol a) (Symbol a) a where
+   lhs --> rhs = fromMaker $ maker (lhs, [[rhs]])
 
 
--- | Use `-->` iff both the left side and the first symbol on the right side are user-defined symbols.
---
--- | Only one symbol is allowed on the left hand side.
---
--- | Use `&` to concatenate two user-defined symbols.
---
--- > table :: [Rule MySym]
--- > table = productRules $ do
--- >    Start ---> ...
--- >            ...
--- >       ; A --> C'
--- >            |/ Null
--- >            ...
---
-(-->) :: FromMaker m => a -> a -> m a ()
-lhs --> rhs = fromMaker $ NT lhs ---> rhs
+class Altern r a where
+   (|>) :: FromMaker m => Maker a -> r -> m a ()
+
+instance Altern a a where
+   m |> a = fromMaker $ maker (lhs, [UD a]:rhs)
+      where
+         (lhs,rhs) = unMaker m
+
+instance Altern (Symbol a) a where
+   m |> Null = fromMaker $ maker (lhs, [Null]:rhs)
+      where
+         (lhs,rhs) = unMaker m
 
 
 -- | Use `&` to concatenate two symbols.
@@ -64,52 +66,8 @@ a & b = fromMaker $ maker (lhs, (UD b:r):rhs)
       (lhs,r:rhs) = unMaker a
 
 
--- | Use `|>` to represent "or" when the left hand side can produce two different expressions,
--- and the right side is a user-defined type.
---
--- > table :: [Rule MySym]
--- > table = productRules $ do
--- >    Start ---> ...
--- >            ...
--- >            |> C'
---
-(|>) :: FromMaker m => Maker a -> a -> m a ()
-m |> a = fromMaker $ maker (lhs, [UD a]:rhs)
-   where
-      (lhs,rhs) = unMaker m
-
-
--- | Use `|/` iff the right hand side is the `Null` symbol.
---
--- > table :: [Rule MySym]
--- > table = productRules $ do
--- >    Start ---> C'
--- >            |/ Null
--- >            |> ...
---
-(|/) :: FromMaker m => Maker a -> Symbol a -> m a ()
-m |/ Null = fromMaker $ maker (lhs, [Null]:rhs)
-   where
-      (lhs,rhs) = unMaker m
-_ |/ _ = error "(|/) can only be used in |/ Null"
-
-
--- | Use `>>>` iff the left hand side is `Start` and the first symbol on the right side is `Null`.
---
--- > table :: [Rule MySym]
--- > table = productRules $ do
--- >    Start >>> Null
--- >           |> C'
--- >           ...
---
-(>>>) :: FromMaker m => Symbol a -> Symbol a -> m a ()
-Start >>> Null = fromMaker $ maker (Start, [[Null]])
-_ >>> _ = error "(>>>) can only be used in Start >>> Null ..."
-
-
 class FromMaker m where
    fromMaker :: Maker a -> m a ()
-
 
 instance FromMaker Maker' where
    fromMaker = id

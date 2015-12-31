@@ -66,12 +66,9 @@ module Parser241.Parser.ProductionRule (
     , isNP
     , isNonTerm
     -- * Production Rule Construction
-    , (--->)
     , (-->)
     , (|>)
     , (&)
-    , (|/)
-    , (>>>)
   ) where
 
 import Parser241.Parser.ProductionRule.Internal
@@ -82,10 +79,7 @@ import Parser241.Parser.ProductionRule.Internal.Manager as X (
 import Parser241.Parser.ProductionRule.Internal.Maker
 import Parser241.Parser.ProductionRule.Internal.Maker as X (
         (-->)
-      , (--->)
       , (|>)
-      , (|/)
       , (&)
-      , (>>>)
    )
 
